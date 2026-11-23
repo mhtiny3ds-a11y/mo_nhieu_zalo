@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mở Nhiều Zalo</title>
+<meta name="description" content="Tạo file .bat để mở nhiều tài khoản Zalo PC cùng lúc trên Windows.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: công cụ hai cột — cấu hình bên trái, mã .bat bên phải; xếp một cột trên điện thoại */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --ink: #18202c;
+  --muted: #5b6676;
+  --line: #d9dfe7;
+  --accent: #1f5fd6;
+  --accent-soft: #e5edfc;
+  --code-bg: #121822;
+  --code-ink: #dbe4f0;
+  --code-dim: #7d8a9c;
+  --ok: #1b7f4b;
+  --warn-bg: #fff4dc;
+  --warn-ink: #7a5300;
+  --f-body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141b; --surface: #171e28; --ink: #e6ebf2; --muted: #98a3b3; --line: #2a3442;
+    --accent: #6c9cff; --accent-soft: #1c2a44; --code-bg: #0a0e14; --code-ink: #dbe4f0; --code-dim: #6f7c8e;
+    --ok: #4cc485; --warn-bg: #33290f; --warn-ink: #f0c869; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141b; --surface: #171e28; --ink: #e6ebf2; --muted: #98a3b3; --line: #2a3442;
+  --accent: #6c9cff; --accent-soft: #1c2a44; --code-bg: #0a0e14; --code-ink: #dbe4f0; --code-dim: #6f7c8e;
+  --ok: #4cc485; --warn-bg: #33290f; --warn-ink: #f0c869; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 48px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+header h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 6px; text-wrap: balance; letter-spacing: -0.01em; }
+header p { margin: 0; color: var(--muted); max-width: 68ch; }
+.tag { display: inline-block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--accent); margin-bottom: 8px; }
+.grid { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.panel h2 { font-size: 1rem; margin: 0; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+label, .lbl { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.hint { font-size: 0.78rem; color: var(--muted); }
+input[type="text"], input[type="number"] {
+  font: inherit; font-size: 0.9rem; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--ink); width: 100%; min-width: 0;
+}
+input.mono { font-family: var(--f-mono); font-size: 0.8rem; }
+input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.accounts { display: flex; flex-direction: column; gap: 8px; }
+.acc { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.acc .n { font-family: var(--f-mono); font-size: 0.8rem; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.acc .slug { grid-column: 2 / 3; font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); margin-top: -4px; overflow-wrap: anywhere; }
+button { font: inherit; cursor: pointer; }
+.icon-btn { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 6px; width: 34px; height: 34px; font-size: 1.1rem; line-height: 1; }
+.icon-btn:hover { color: var(--ink); border-color: var(--muted); }
+.ghost { border: 1px dashed var(--line); background: transparent; color: var(--accent); border-radius: 6px; padding: 8px; font-size: 0.88rem; font-weight: 600; }
+.ghost:hover { border-color: var(--accent); background: var(--accent-soft); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--muted); padding: 9px 6px; font-size: 0.85rem; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.88rem; }
+.check input { margin-top: 4px; accent-color: var(--accent); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.out { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.file { background: var(--code-bg); border-radius: 10px; overflow: hidden; min-width: 0; }
+.file-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #ffffff14; flex-wrap: wrap; }
+.fname { font-family: var(--f-mono); font-size: 0.85rem; color: var(--code-ink); }
+.fname small { color: var(--code-dim); margin-left: 8px; }
+.copy { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 6px 14px; font-size: 0.82rem; font-weight: 600; }
+.copy.done { background: var(--ok); }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.dl { background: transparent; color: var(--code-ink); border: 1px solid #ffffff33; border-radius: 6px; padding: 6px 14px; font-size: 0.82rem; font-weight: 600; }
+.dl:hover { border-color: var(--code-ink); }
+footer a { color: var(--accent); }
+pre { margin: 0; padding: 14px; overflow-x: auto; font-family: var(--f-mono); font-size: 0.78rem; line-height: 1.6; color: var(--code-ink); white-space: pre; }
+pre .c { color: var(--code-dim); }
+.steps { margin: 0; padding-left: 1.3rem; display: flex; flex-direction: column; gap: 10px; }
+.steps li { padding-left: 4px; }
+kbd { font-family: var(--f-mono); font-size: 0.78rem; background: var(--accent-soft); color: var(--ink); border-radius: 4px; padding: 1px 6px; }
+code { font-family: var(--f-mono); font-size: 0.82em; background: var(--accent-soft); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+.note { background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 12px 14px; font-size: 0.85rem; }
+.note strong { color: inherit; }
+footer { color: var(--muted); font-size: 0.8rem; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="tag">Windows · Zalo PC</div>
+    <h1>Mở nhiều tài khoản Zalo PC cùng lúc</h1>
+    <p>Nhập tên các tài khoản, công cụ sẽ tạo sẵn file <code>.bat</code>. Mỗi tài khoản có một thư mục dữ liệu riêng nên các cửa sổ Zalo chạy song song, không đá nhau ra.</p>
+  </header>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="cfg">
+      <h2 id="cfg">1. Cấu hình</h2>
+
+      <div class="field">
+        <span class="lbl">Tài khoản phụ</span>
+        <div class="accounts" id="accounts"></div>
+        <button class="ghost" id="add" type="button">+ Thêm tài khoản</button>
+        <span class="hint">Gõ tên có dấu cũng được, tên thư mục sẽ tự bỏ dấu.</span>
+      </div>
+
+      <label class="check"><input type="checkbox" id="main" checked> <span>Mở luôn Zalo chính (tài khoản đang đăng nhập sẵn trên máy)</span></label>
+
+      <div class="field">
+        <span class="lbl">Kiểu file</span>
+        <div class="seg" role="group" aria-label="Kiểu file">
+          <button type="button" id="mode-all" aria-pressed="true">Một file mở tất cả</button>
+          <button type="button" id="mode-each" aria-pressed="false">Mỗi tài khoản một file</button>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="delay">Chờ giữa mỗi cửa sổ (giây)</label>
+          <input type="number" id="delay" min="0" max="15" value="3">
+        </div>
+        <div class="field">
+          <label for="fname">Tên file</label>
+          <input type="text" id="fname" value="Mo-Zalo">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="exe">Đường dẫn Zalo.exe</label>
+        <input type="text" id="exe" class="mono" value="%LOCALAPPDATA%\Programs\Zalo\Zalo.exe" spellcheck="false">
+        <span class="hint">Mặc định đúng với đa số máy. Nếu khác: chuột phải shortcut Zalo → Open file location.</span>
+      </div>
+
+      <div class="field">
+        <label for="base">Thư mục lưu dữ liệu các tài khoản phụ</label>
+        <input type="text" id="base" class="mono" value="%USERPROFILE%\ZaloMulti" spellcheck="false">
+      </div>
+    </section>
+
+    <section class="out" aria-labelledby="res">
+      <div class="panel">
+        <h2 id="res">2. Sao chép mã</h2>
+        <div class="out" id="files"></div>
+      </div>
+
+      <div class="panel">
+        <h2>3. Lưu thành file và chạy</h2>
+        <ol class="steps">
+          <li>Bấm <strong>Tải về</strong> để lưu thẳng file <code>.bat</code>, rồi chép file ra Desktop.<br><span class="hint">Hoặc bấm <strong>Sao chép</strong>, dán vào Notepad, chọn <strong>File → Save As</strong>, mục <em>Save as type</em> chọn <strong>All Files</strong> và đặt tên đúng như trên khung code.</span></li>
+          <li>Nhấp đúp file vừa lưu. Lần đầu, mỗi cửa sổ mới hiện mã QR, bạn quét bằng điện thoại của tài khoản tương ứng. Từ lần sau sẽ tự đăng nhập.</li>
+          <li>Muốn có biểu tượng đẹp: chuột phải file → <strong>Send to → Desktop (create shortcut)</strong> → Properties → <strong>Change Icon</strong> → chọn <code>Zalo.exe</code>.</li>
+        </ol>
+        <div class="note"><strong>Đăng xuất / xóa một tài khoản phụ:</strong> xóa thư mục tương ứng trong <code id="basehint"></code>. Nếu Windows SmartScreen cảnh báo khi chạy file .bat, bấm <em>More info → Run anyway</em>; bạn có thể mở file bằng Notepad để kiểm tra, nội dung chỉ là các lệnh ở trên.</div>
+      </div>
+    </section>
+  </div>
+
+  <footer>Công cụ không chính thức, không liên quan tới Zalo/VNG. Trang chạy hoàn toàn trên trình duyệt của bạn và không gửi dữ liệu đi đâu. Cần app có giao diện thay cho file .bat? Xem <a href="https://github.com/mhtiny3ds-a11y/mo_nhieu_zalo">mã nguồn và app MoNhieuZalo trên GitHub</a>.</footer>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  let accounts = ["Bán hàng", "Cá nhân", "Công việc"];
+  let mode = "all";
+
+  function slug(s, i) {
+    const t = s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D")
+      .replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
+    return t || ("Zalo" + (i + 2));
+  }
+  function slugs() {
+    const seen = {};
+    return accounts.map((a, i) => {
+      let s = slug(a, i), k = s, n = 2;
+      while (seen[k.toLowerCase()]) k = s + "-" + n++;
+      seen[k.toLowerCase()] = 1;
+      return k;
+    });
+  }
+  const clean = (v) => v.replace(/["\r\n]/g, "").trim();
+
+  function renderAccounts() {
+    const box = $("accounts");
+    box.innerHTML = "";
+    const sl = slugs();
+    accounts.forEach((a, i) => {
+      const row = document.createElement("div");
+      row.className = "acc";
+      row.innerHTML = '<span class="n">' + (i + 1) + '</span>';
+      const inp = document.createElement("input");
+      inp.type = "text"; inp.id = "acc-" + i; inp.value = a;
+      inp.setAttribute("aria-label", "Tên tài khoản " + (i + 1));
+      inp.addEventListener("input", () => { accounts[i] = inp.value; updateSlugs(); build(); });
+      const del = document.createElement("button");
+      del.type = "button"; del.className = "icon-btn"; del.textContent = "×";
+      del.setAttribute("aria-label", "Xóa tài khoản " + (i + 1));
+      del.disabled = accounts.length <= 1;
+      del.addEventListener("click", () => { accounts.splice(i, 1); renderAccounts(); build(); });
+      const sp = document.createElement("span");
+      sp.className = "slug"; sp.textContent = "thư mục: " + sl[i];
+      row.append(inp, del, sp);
+      box.append(row);
+    });
+    $("add").disabled = accounts.length >= 12;
+  }
+  function updateSlugs() {
+    const sl = slugs();
+    document.querySelectorAll(".acc .slug").forEach((el, i) => el.textContent = "thư mục: " + sl[i]);
+  }
+
+  function header(exe, base) {
+    return [
+      "@echo off",
+      "setlocal",
+      ":: Tao boi cong cu \"Mo Nhieu Zalo\" - moi tai khoan dung thu muc du lieu rieng",
+      'set "ZALO_EXE=' + exe + '"',
+      'set "BASE=' + base + '"',
+      'if not exist "%ZALO_EXE%" goto :notfound',
+    ];
+  }
+  function openSub(delay) {
+    return [
+      "",
+      ":open",
+      "setlocal",
+      'set "H=%BASE%\\%~1"',
+      'if not exist "%H%\\AppData\\Roaming" mkdir "%H%\\AppData\\Roaming"',
+      'if not exist "%H%\\AppData\\Local" mkdir "%H%\\AppData\\Local"',
+      'set "USERPROFILE=%H%"',
+      'set "APPDATA=%H%\\AppData\\Roaming"',
+      'set "LOCALAPPDATA=%H%\\AppData\\Local"',
+      'start "" "%ZALO_EXE%"',
+      "endlocal",
+      delay > 0 ? "timeout /t " + delay + " /nobreak >nul" : null,
+      "exit /b",
+      "",
+      ":notfound",
+      'echo Khong tim thay Zalo tai: "%ZALO_EXE%"',
+      "echo Hay mo file nay bang Notepad va sua dong ZALO_EXE cho dung duong dan.",
+      "pause",
+      "exit /b 1",
+    ].filter((l) => l !== null);
+  }
+
+  function build() {
+    const exe = clean($("exe").value) || "%LOCALAPPDATA%\\Programs\\Zalo\\Zalo.exe";
+    const base = clean($("base").value) || "%USERPROFILE%\\ZaloMulti";
+    let delay = parseInt($("delay").value, 10); if (isNaN(delay) || delay < 0) delay = 0; if (delay > 15) delay = 15;
+    const fname = (slug(clean($("fname").value), -1) || "Mo-Zalo");
+    const withMain = $("main").checked;
+    const sl = slugs();
+    $("basehint").textContent = base;
+
+    const out = [];
+    if (mode === "all") {
+      const L = header(exe, base);
+      L.push("");
+      if (withMain) {
+        L.push(":: Zalo chinh");
+        L.push('start "" "%ZALO_EXE%"');
+        if (delay > 0) L.push("timeout /t " + delay + " /nobreak >nul");
+      }
+      L.push(":: Cac tai khoan phu");
+      accounts.forEach((a, i) => L.push('call :open "' + sl[i] + '"'));
+      L.push("exit /b");
+      out.push({ name: fname + ".bat", sub: (accounts.length + (withMain ? 1 : 0)) + " cửa sổ", text: L.concat(openSub(delay)).join("\r\n") });
+    } else {
+      if (withMain) {
+        out.push({ name: "Zalo-chinh.bat", sub: "tài khoản chính", text: ['@echo off', 'start "" "' + exe + '"'].join("\r\n") });
+      }
+      accounts.forEach((a, i) => {
+        const L = header(exe, base);
+        L.push('call :open "' + sl[i] + '"', "exit /b");
+        out.push({ name: "Zalo-" + sl[i] + ".bat", sub: a.trim() || sl[i], text: L.concat(openSub(0)).join("\r\n") });
+      });
+    }
+    renderFiles(out);
+  }
+
+  function highlight(pre, text) {
+    pre.textContent = "";
+    text.split("\r\n").forEach((line, i, arr) => {
+      if (/^\s*::/.test(line)) {
+        const s = document.createElement("span"); s.className = "c"; s.textContent = line; pre.append(s);
+      } else pre.append(document.createTextNode(line));
+      if (i < arr.length - 1) pre.append(document.createTextNode("\n"));
+    });
+  }
+
+  function renderFiles(list) {
+    const box = $("files");
+    box.innerHTML = "";
+    list.forEach((f) => {
+      const card = document.createElement("div"); card.className = "file";
+      const head = document.createElement("div"); head.className = "file-head";
+      const nm = document.createElement("span"); nm.className = "fname"; nm.textContent = f.name;
+      const sm = document.createElement("small"); sm.textContent = f.sub; nm.append(sm);
+      const btn = document.createElement("button"); btn.type = "button"; btn.className = "copy"; btn.textContent = "Sao chép";
+      const pre = document.createElement("pre"); highlight(pre, f.text);
+      btn.addEventListener("click", () => {
+        const done = () => { btn.textContent = "Đã sao chép"; btn.classList.add("done"); setTimeout(() => { btn.textContent = "Sao chép"; btn.classList.remove("done"); }, 1800); };
+        const fallback = () => {
+          const r = document.createRange(); r.selectNodeContents(pre);
+          const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+          btn.textContent = "Đã bôi đen, nhấn Ctrl+C";
+        };
+        try { navigator.clipboard.writeText(f.text).then(done, fallback); } catch (e) { fallback(); }
+      });
+      const dl = document.createElement("button"); dl.type = "button"; dl.className = "dl"; dl.textContent = "Tải về";
+      dl.addEventListener("click", () => {
+        const url = URL.createObjectURL(new Blob([f.text + "\r\n"], { type: "application/octet-stream" }));
+        const a = document.createElement("a"); a.href = url; a.download = f.name;
+        document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      });
+      const btns = document.createElement("div"); btns.className = "btns"; btns.append(dl, btn);
+      head.append(nm, btns);
+      card.append(head, pre);
+      box.append(card);
+    });
+  }
+
+  $("add").addEventListener("click", () => { accounts.push("Tài khoản " + (accounts.length + 2)); renderAccounts(); build(); $("acc-" + (accounts.length - 1)).focus(); });
+  ["exe", "base", "delay", "fname"].forEach((id) => $(id).addEventListener("input", build));
+  $("main").addEventListener("change", build);
+  function setMode(m) {
+    mode = m;
+    $("mode-all").setAttribute("aria-pressed", m === "all");
+    $("mode-each").setAttribute("aria-pressed", m === "each");
+    $("fname").disabled = m !== "all";
+    build();
+  }
+  $("mode-all").addEventListener("click", () => setMode("all"));
+  $("mode-each").addEventListener("click", () => setMode("each"));
+
+  renderAccounts();
+  build();
+})();
+</script>
+</body>
+</html>

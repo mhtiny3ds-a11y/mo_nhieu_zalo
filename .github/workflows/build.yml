@@ -1,0 +1,45 @@
+name: Build MoNhieuZalo.exe
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', '.github/workflows/build.yml']
+  pull_request:
+    paths: ['app/**', '.github/workflows/build.yml']
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kiem tra cu phap PowerShell
+        shell: powershell
+        run: |
+          foreach ($f in 'app\MoNhieuZalo.ps1', 'app\build.ps1') {
+            $errs = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $f), [ref]$null, [ref]$errs) | Out-Null
+            if ($errs) { $errs | Format-List; throw "Loi cu phap trong $f" }
+          }
+
+      - name: Build exe
+        shell: powershell
+        run: .\app\build.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MoNhieuZalo
+          path: app/MoNhieuZalo.exe
+
+      - name: Dinh kem vao Release
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" app/MoNhieuZalo.exe --clobber
